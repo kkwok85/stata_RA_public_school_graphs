@@ -30,10 +30,12 @@ graph save Graph g2, replace
 
 
 
-
+set more off
 
 * The following is subsampling the data and focus on political science and public administration
 *****************************************************************************************************************************
+
+foreach dis in Political_Science_Public_Admin Economics Other_Social_Sci Social_Service Sociology  {
 
 
 import excel using "SED subsample.xlsx", clear firstrow
@@ -50,6 +52,8 @@ Sociology
 
 gen discipline_replicate =.
 
+tostring discipline_replicate , replace
+
 replace discipline_replicate = "Political_Science_Public_Admin" if discipline == "Political Science and Public Administration"
 
 replace discipline_replicate = "Economics" if discipline == "Economics"
@@ -62,27 +66,30 @@ replace discipline_replicate = "Sociology" if discipline == "Sociology"
 
 
 
-foreach var in Political_Science_Public_Admin Economics Other_Social_Sci Social_Service Sociology  {
+drop if AcademicInstitutionstandardiz == "Not Available" | AcademicInstitutionstandardiz == ". Unknown Institutions"
+
+
+encode AcademicInstitutionstandardiz, gen(AcademicInstitutionstandardiz1)
+encode State, gen(State1)
+destring NumberofDoctorateRecipientsb, replace 
+
+
+
  
 
 
-	keep if discipline == "Political Science and Public Administration"
-
-
-	drop if AcademicInstitutionstandardiz == "Not Available" | AcademicInstitutionstandardiz == ". Unknown Institutions"
-
-
-	encode AcademicInstitutionstandardiz, gen(AcademicInstitutionstandardiz1)
-	encode State, gen(State1)
-	destring NumberofDoctorateRecipientsb, replace 
-
-	xtset AcademicInstitutionstandardiz1 Year
+keep if discipline_replicate == "`dis'"
 
 
 
-	bysort AcademicInstitutionstandardiz1: egen sum_all_years_by_school = total(NumberofDoctorateRecipientsb)   // aggregate all graduates in all years within Political Science and Public Administration
-	bysort State: egen sum_all_state = total(NumberofDoctorateRecipientsb) // aggregate all graduates in all years within each state
-	bysort Year: egen sum_all_year = total(NumberofDoctorateRecipientsb)  // aggregate all graduates in all states in each year
+
+xtset AcademicInstitutionstandardiz1 Year
+
+
+
+bysort AcademicInstitutionstandardiz1: egen sum_all_years_by_school = total(NumberofDoctorateRecipientsb)   // aggregate all graduates in all years within Political Science and Public Administration
+bysort State: egen sum_all_state = total(NumberofDoctorateRecipientsb) // aggregate all graduates in all years within each state
+bysort Year: egen sum_all_year = total(NumberofDoctorateRecipientsb)  // aggregate all graduates in all states in each year
 
 
 
@@ -102,35 +109,36 @@ graph save Graph g5, replace
 
 */
 
-graph twoway line sum_all_year Year  // graph of aggregating all graduates in all states in each year
-graph save Graph sum_all_year_, replace
+	graph twoway line sum_all_year Year  // graph of aggregating all graduates in all states in each year
+	graph save Graph sum_all_year_`dis', replace
 
 
 
 
 ***** graph of PhD graduates by schools *****
-sort AcademicInstitutionstandardiz1 Year
+	sort AcademicInstitutionstandardiz1 Year
 
-egen newid = group(AcademicInstitutionstandardiz1)
-
-
+	egen newid = group(AcademicInstitutionstandardiz1)
 
 
 
-replace NumberofDoctorateRecipientsb = 0 if NumberofDoctorateRecipientsb == .
 
 
-forvalues i = 0(50)1000 {
+	replace NumberofDoctorateRecipientsb = 0 if NumberofDoctorateRecipientsb == .
+	
+	sum newid
+	local total = r(max)-50	
+	
+	
+	forvalues i = 0(50) `total' {
 
-	xtline NumberofDoctorateRecipientsb if sum_all_years_by_school != 0 & newid >= 1 + `i'  & newid < 50 + 1 + `i', yline(0)
-	graph save Graph Political_Policy_by_school`i', replace
+		xtline NumberofDoctorateRecipientsb if sum_all_years_by_school != 0 & newid >= 1 + `i'  & newid < 50 + 1 + `i', yline(0)
+		graph save Graph `dis'_by_school`i', replace
 
+	}
+
+	
 }
-
-
-
-
-
 
 
 

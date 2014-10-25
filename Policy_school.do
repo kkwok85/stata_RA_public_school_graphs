@@ -48,33 +48,45 @@ Sociology
 */
 
 
-keep if discipline == "Political Science and Public Administration"
+gen discipline_replicate =.
+
+replace discipline_replicate = "Political_Science_Public_Admin" if discipline == "Political Science and Public Administration"
+
+replace discipline_replicate = "Economics" if discipline == "Economics"
+
+replace discipline_replicate = "Other_Social_Sci" if discipline == "Other Social Sciences"
+
+replace discipline_replicate = "Social_Service" if discipline == "Social Service Professions"
+
+replace discipline_replicate = "Sociology" if discipline == "Sociology"
 
 
 
-drop if AcademicInstitutionstandardiz == "Not Available" | AcademicInstitutionstandardiz == ". Unknown Institutions"
+foreach var in Political_Science_Public_Admin Economics Other_Social_Sci Social_Service Sociology  {
+ 
 
 
-encode AcademicInstitutionstandardiz, gen(AcademicInstitutionstandardiz1)
-encode State, gen(State1)
-destring NumberofDoctorateRecipientsb, replace 
-
-xtset AcademicInstitutionstandardiz1 Year
+	keep if discipline == "Political Science and Public Administration"
 
 
-
-bysort AcademicInstitutionstandardiz1: egen sum_all_years_by_school = total(NumberofDoctorateRecipientsb)   // aggregate all graduates in all years within Political Science and Public Administration
-bysort State: egen sum_all_state = total(NumberofDoctorateRecipientsb) // aggregate all graduates in all years within each state
-bysort Year: egen sum_all_year = total(NumberofDoctorateRecipientsb)  // aggregate all graduates in all states in each year
+	drop if AcademicInstitutionstandardiz == "Not Available" | AcademicInstitutionstandardiz == ". Unknown Institutions"
 
 
+	encode AcademicInstitutionstandardiz, gen(AcademicInstitutionstandardiz1)
+	encode State, gen(State1)
+	destring NumberofDoctorateRecipientsb, replace 
 
-
+	xtset AcademicInstitutionstandardiz1 Year
 
 
 
+	bysort AcademicInstitutionstandardiz1: egen sum_all_years_by_school = total(NumberofDoctorateRecipientsb)   // aggregate all graduates in all years within Political Science and Public Administration
+	bysort State: egen sum_all_state = total(NumberofDoctorateRecipientsb) // aggregate all graduates in all years within each state
+	bysort Year: egen sum_all_year = total(NumberofDoctorateRecipientsb)  // aggregate all graduates in all states in each year
 
-* you can play around with the numbers. But there will be too many graphs printed out if the number is too small
+
+
+/* you can play around with the numbers. But there will be too many graphs printed out if the number is too small
 xtline NumberofDoctorateRecipientsb if sum_all_years_by_school >= 200
 graph save Graph g3, replace
 
@@ -88,9 +100,10 @@ graph save Graph g4, replace
 graph hbar (sum) NumberofDoctorateRecipientsb if sum_all_state > 500, over(State)    // graph of aggregating all graduates in all years within each state
 graph save Graph g5, replace
 
+*/
 
 graph twoway line sum_all_year Year  // graph of aggregating all graduates in all states in each year
-graph save Graph g6, replace
+graph save Graph sum_all_year_, replace
 
 
 

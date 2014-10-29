@@ -18,6 +18,7 @@ bysort Year: egen sum_all_discipline_all_year = total(NumberofDoctorateRecipient
 
 
 
+
 graph hbar (sum) NumberofDoctorateRecipientsb , over(discipline)    // graph of PhD grad in different disciplines in all years
 graph save Graph g1, replace
 
@@ -67,13 +68,17 @@ Sociology
 
 
 
+
 	drop if AcademicInstitutionstandardiz == "Not Available" | AcademicInstitutionstandardiz == ". Unknown Institutions"
 
 
 	encode AcademicInstitutionstandardiz, gen(AcademicInstitutionstandardiz1)
 	encode State, gen(State1)
 	destring NumberofDoctorateRecipientsb, replace 
+	
+	
 
+	bysort Year: egen sum_all_discipline_all_year = total(NumberofDoctorateRecipientsb) // aggregate all disciplines in each year
 
 
  
@@ -110,18 +115,35 @@ Sociology
 
 	*/
 
-	graph twoway line sum_all_year Year  // graph of aggregating all graduates in all states in each year
+	
+	
+
+	graph twoway line sum_all_year Year, title(`dis' PhD Graduates in US)  // graph of aggregating all graduates in all states in each year
 	graph save Graph sum_all_year_`dis', replace
 
 
 
+	gen diff_disciplines_all = sum_all_discipline_all_year - sum_all_year
+	
+	graph twoway line diff_disciplines_all Year, title(Total less `dis' PhD Graduates in US)
+	graph save Graph all_minus_disciplines_`dis', replace
+
+
+	graph twoway (line sum_all_discipline_all_year Year) (line diff_disciplines_all Year) (line sum_all_year Year), legend(label(1 "Total PhD graduates") label(2 "Total PhD minus PhD in `dis'") label(3 "`dis' PhD Graduates")) title(PhD graduates total and by field)
+	graph save Graph all_lines_combine_`dis', replace
+
+	
+	
+/*
 
 ***** graph of PhD graduates by schools *****
 	sort AcademicInstitutionstandardiz1 Year
 
 	egen newid = group(AcademicInstitutionstandardiz1)
 
-
+	
+	
+	
 
 
 
@@ -138,8 +160,33 @@ Sociology
 
 			}
 
+*/
 	
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
